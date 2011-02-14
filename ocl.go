@@ -6,7 +6,7 @@ cl_platform_id* cl_platform_null = 0;
 */
 import "C"
 
-func GetNumberOfPlatforms() uint {
+func GetPlatformsNumber() uint {
 	var numPlatforms C.cl_uint
 	C.clGetPlatformIDs(0, C.cl_platform_null, &numPlatforms)
 	var res uint = uint(numPlatforms)
