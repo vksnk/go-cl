@@ -13,12 +13,24 @@ func GetPlatformsNumber() uint {
 	return res
 }
 
+type Device struct {
+	ADevice C.cl_device_id
+}
+
 type Context struct {
 	AContext C.cl_context
 }
 
 type CommandQueue struct {
 	AQueue C.cl_command_queue
+}
+
+func CreateQueue(ctx *Context, dev *Device) (*CommandQueue) {
+	return nil
+}
+
+func CreateContext() (*Context){
+	return nil
 }
 
 func (cq *CommandQueue) Finish() {
