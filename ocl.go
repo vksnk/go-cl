@@ -1,30 +1,33 @@
 package ocl
 /*
+#include <stdlib.h>
 #include <CL/cl.h>
 
-cl_platform_id* cl_platform_null = 0;
 */
 import "C"
 
-func GetPlatformsNumber() uint {
+
+func PlatformsNumber() uint {
 	var numPlatforms C.cl_uint
-	C.clGetPlatformIDs(0, C.cl_platform_null, &numPlatforms)
+	C.clGetPlatformIDs(0, nil, &numPlatforms)
 	var res uint = uint(numPlatforms)
 	return res
 }
 
-type Device struct {
-	ADevice C.cl_device_id
-}
+type Platform C.cl_platform_id
+type Device C.cl_device_id
+type Context C.cl_context
+type CommandQueue C.cl_command_queue
+type Buffer C.cl_mem
+type Kernel C.cl_kernel
+type Event C.cl_event
 
-type Context struct {
-	AContext C.cl_context
+func Platforms(num uint) []Platform {
+	res := make([]Platform, num)
+	C.clGetPlatformIDs(C.cl_uint(num), (*C.cl_platform_id)(&res[0]), nil)
+	return res
 }
-
-type CommandQueue struct {
-	AQueue C.cl_command_queue
-}
-
+/*
 func CreateQueue(ctx *Context, dev *Device) (*CommandQueue) {
 	return nil
 }
@@ -33,16 +36,7 @@ func CreateContext() (*Context){
 	return nil
 }
 
-func (cq *CommandQueue) Finish() {
-	C.clFinish(cq.AQueue);
+func (cq CommandQueue) Finish() {
+	C.clFinish(cq);
 }
-
-type Buffer struct {
-	ABuffer C.cl_mem
-}
-
-type Kernel struct {
-	AKernel C.cl_kernel
-}
-
-
+*/
