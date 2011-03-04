@@ -6,6 +6,7 @@ package ocl
 */
 import "C"
 import "unsafe"
+import "fmt"
 
 //constants for clGetPlatformInfo function
 const (
@@ -17,6 +18,17 @@ const (
 )
 
 type PlatformInfo C.cl_platform_info
+
+
+const (
+	CL_DEVICE_TYPE_DEFAULT = C.CL_DEVICE_TYPE_DEFAULT
+	CL_DEVICE_TYPE_CPU = C.CL_DEVICE_TYPE_CPU
+	CL_DEVICE_TYPE_GPU = C.CL_DEVICE_TYPE_GPU
+	CL_DEVICE_TYPE_ACCELERATOR = C.CL_DEVICE_TYPE_ACCELERATOR
+	CL_DEVICE_TYPE_ALL = C.CL_DEVICE_TYPE_ALL
+)
+
+type DeviceType C.cl_device_type
 
 func PlatformsNumber() uint {
 	var numPlatforms C.cl_uint
@@ -35,11 +47,6 @@ type Device struct {
 	item aDevice
 }
 
-type aContext C.cl_context
-type Context struct {
-	item aContext
-}
-
 type aCommandQueue C.cl_command_queue
 type CommandQueue struct {
 	item aCommandQueue
@@ -54,15 +61,16 @@ type Event C.cl_event
 func Platforms(num uint) []Platform {
 	if num == 0 { num = PlatformsNumber() }
 	platforms := make([]aPlatform, num)
-	C.clGetPlatformIDs(C.cl_uint(num), (*C.cl_platform_id)(&platforms[0]), nil)
-	res := make([]Platform, num)
-	for i := 0; i < len(platforms); i++ {
+	var realNum C.cl_uint = 0
+	C.clGetPlatformIDs(C.cl_uint(num), (*C.cl_platform_id)(&platforms[0]), &realNum)
+	res := make([]Platform, realNum)
+	var i C.cl_uint
+	for i = 0; i < realNum; i++ {
 		res[i].item = platforms[i]
 	}
 
 	return res
 }
-
 
 func (pl *Platform) Info(pinfo PlatformInfo) string {
 	const bufSize = 4096
@@ -77,6 +85,19 @@ func (pl *Platform) Info(pinfo PlatformInfo) string {
 	return res
 }
 
+func (pl* Platform) Devices(devType DeviceType, num uint) []Device {
+	devices := make([]aDevice, num)
+	var realNum C.cl_uint = 0
+
+	error := C.clGetDeviceIDs(pl.item, C.cl_device_type(devType), C.cl_uint(num), (*C.cl_device_id)(&devices[0]), &realNum)
+	res := make([]Device, realNum)
+	fmt.Printf("xxx %d\n", int(error))
+	var i C.cl_uint
+	for i = 0; i < realNum; i++ {
+		res[i].item = devices[i]
+	}
+	return res
+}
 /*
 func CreateQueue(ctx *Context, dev *Device) (*CommandQueue) {
 	return nil
@@ -89,7 +110,22 @@ func CreateContext() (*Context){
 
 
 func (cq *CommandQueue) Finish() {
+	fmt.Printf("Supress.\n")
 	C.clFinish(cq.item);
 }
 
+type aContext C.cl_context
+type Context struct {
+	item aContext
+}
 
+func CreateContext(devType DeviceType) *Context {
+	var ctx Context
+	var error C.cl_int
+	ctx.item = aContext(C.clCreateContextFromType(nil, C.cl_device_type(devType), nil, nil, &error))
+	fmt.Printf("Context error:%d\n", error)
+	return &ctx
+}
+
+func (*Context) Foo() {
+}
