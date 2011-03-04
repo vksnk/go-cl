@@ -8,6 +8,10 @@ import "C"
 import "unsafe"
 import "fmt"
 
+const (
+	CL_CONTEXT_PLATFORM = C.CL_CONTEXT_PLATFORM
+)
+
 //constants for clGetPlatformInfo function
 const (
 	CL_PLATFORM_PROFILE = C.CL_PLATFORM_PROFILE
