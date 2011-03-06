@@ -7,6 +7,7 @@ package ocl
 import "C"
 import "unsafe"
 import "fmt"
+import "runtime"
 
 const (
 	CL_CONTEXT_PLATFORM = C.CL_CONTEXT_PLATFORM
@@ -56,8 +57,6 @@ type CommandQueue struct {
 	item aCommandQueue
 }
 
-type Buffer C.cl_mem
-type Kernel C.cl_kernel
 type Event C.cl_event
 
 //type ContextProperty C.cl_context_property
@@ -118,18 +117,66 @@ func (cq *CommandQueue) Finish() {
 	C.clFinish(cq.item);
 }
 
-type aContext C.cl_context
 type Context struct {
-	item aContext
+	item C.cl_context
 }
 
 func CreateContext(devType DeviceType) *Context {
 	var ctx Context
 	var error C.cl_int
-	ctx.item = aContext(C.clCreateContextFromType(nil, C.cl_device_type(devType), nil, nil, &error))
+	ctx.item = C.clCreateContextFromType(nil, C.cl_device_type(devType), nil, nil, &error)
 	fmt.Printf("Context error:%d\n", error)
 	return &ctx
 }
 
-func (*Context) Foo() {
+type Program struct {
+	item C.cl_program
+}
+
+func CreateProgram(context *Context, sources []string) *Program {
+	runtime.LockOSThread()
+	var program Program
+	var error C.cl_int
+/*
+	csources := make([]*C.char, len(sources))
+	clenghts := make([]C.size_t, len(sources))
+
+	for i := 0; i < len(sources); i++ {
+		csources[i] = C.CString(sources[i])
+		clenghts[i] = C.size_t(len(sources[i]))
+		fmt.Printf("Program log:%d %s\n",clenghts[i], sources[i])
+	}
+*/
+	csource := C.CString(sources[0])
+	program.item = C.clCreateProgramWithSource(
+				context.item,
+				1,
+				&csource,
+				nil,
+				&error)
+
+	fmt.Printf("Program error:%d\n", error)
+
+	return &program
+}
+
+type Kernel struct {
+	item C.cl_kernel
+}
+
+
+func CreateKernel(program *Program, name string) *Kernel {
+	var kernel Kernel
+	var error C.cl_int
+	kernel.item = C.clCreateKernel(program.item, C.CString(name), &error)
+	fmt.Printf("Kernel error:%d\n", error)
+	return &kernel
+}
+
+func (*Kernel) Foo() {
+
+}
+
+type Buffer struct {
+	item C.cl_mem
 }

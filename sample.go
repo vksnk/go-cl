@@ -7,6 +7,8 @@ import (
 
 
 func main() {
+	kernelSrc := "__kernel void hello(void) {}"
+
 	fmt.Printf("go OpenCL example\n")
 	platformsNum := ocl.PlatformsNumber()
 	fmt.Printf("Platforms in system %d\n", platformsNum)
@@ -20,5 +22,7 @@ func main() {
 	}
 
 	ctx := ocl.CreateContext(ocl.CL_DEVICE_TYPE_GPU)
-	ctx.Foo()
+	program := ocl.CreateProgram(ctx, []string{kernelSrc})
+	helloKernel := ocl.CreateKernel(program, "hello")
+	helloKernel.Foo()
 }
