@@ -3,6 +3,24 @@ package ocl
 #include <stdlib.h>
 #include <CL/cl.h>
 
+static char**makeCharArray(int size) {
+        return calloc(sizeof(char*), size); 
+} 
+
+static void setArrayString(char **a, char *s, int n) { 
+        a[n] = s; 
+} 
+
+static void freeCharArray(char **a, int size) { 
+        int i; 
+        for (i = 0; i < size; i++) 
+                free(a[i]); 
+        free(a); 
+}
+
+static cl_context_properties platform2property(cl_platform_id pid) {
+	return (cl_context_properties)pid;
+}
 */
 import "C"
 import "unsafe"
@@ -101,16 +119,6 @@ func (pl* Platform) Devices(devType DeviceType, num uint) []Device {
 	}
 	return res
 }
-/*
-func CreateQueue(ctx *Context, dev *Device) (*CommandQueue) {
-	return nil
-}
-
-func CreateContext() (*Context){
-	return nil
-}
-*/
-
 
 func (cq *CommandQueue) Finish() {
 	fmt.Printf("Supress.\n")
@@ -121,10 +129,11 @@ type Context struct {
 	item C.cl_context
 }
 
-func CreateContext(devType DeviceType) *Context {
+func CreateContext(platform *Platform, devType DeviceType) *Context {
 	var ctx Context
 	var error C.cl_int
-	ctx.item = C.clCreateContextFromType(nil, C.cl_device_type(devType), nil, nil, &error)
+	properties := []C.cl_context_properties{CL_CONTEXT_PLATFORM, C.platform2property(platform.item), C.cl_context_properties(0)}
+	ctx.item = C.clCreateContextFromType(&properties[0], C.cl_device_type(devType), nil, nil, &error)
 	fmt.Printf("Context error:%d\n", error)
 	return &ctx
 }
@@ -137,22 +146,23 @@ func CreateProgram(context *Context, sources []string) *Program {
 	runtime.LockOSThread()
 	var program Program
 	var error C.cl_int
-/*
-	csources := make([]*C.char, len(sources))
+
+	csources := C.makeCharArray(C.int(len(sources)))
 	clenghts := make([]C.size_t, len(sources))
 
+	defer C.freeCharArray(csources, C.int(len(sources)))
+
 	for i := 0; i < len(sources); i++ {
-		csources[i] = C.CString(sources[i])
+		C.setArrayString(csources, C.CString(sources[i]), C.int(i))
 		clenghts[i] = C.size_t(len(sources[i]))
 		fmt.Printf("Program log:%d %s\n",clenghts[i], sources[i])
 	}
-*/
-	csource := C.CString(sources[0])
+
 	program.item = C.clCreateProgramWithSource(
 				context.item,
-				1,
-				&csource,
-				nil,
+				C.cl_uint(len(sources)),
+				csources,
+				&clenghts[0],
 				&error)
 
 	fmt.Printf("Program error:%d\n", error)

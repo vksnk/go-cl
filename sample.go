@@ -21,7 +21,7 @@ func main() {
 		fmt.Printf("  :: %s\n", platforms[i].Info(ocl.CL_PLATFORM_EXTENSIONS))
 	}
 
-	ctx := ocl.CreateContext(ocl.CL_DEVICE_TYPE_GPU)
+	ctx := ocl.CreateContext(&platforms[0], ocl.CL_DEVICE_TYPE_GPU)
 	program := ocl.CreateProgram(ctx, []string{kernelSrc})
 	helloKernel := ocl.CreateKernel(program, "hello")
 	helloKernel.Foo()
